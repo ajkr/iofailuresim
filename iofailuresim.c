@@ -104,7 +104,7 @@ int fsync(int fd) {
     if (num_syncs_until_crash > 0) {
         --num_syncs_until_crash;
         if (num_syncs_until_crash == 0) {
-            kill(0, SIGKILL);
+            kill(getpid(), SIGKILL);
         }
     }
     if (fd_to_buf[fd].data == NULL) {

@@ -28,6 +28,7 @@ static struct Buf* fd_to_buf = NULL;
 // Lock needed to handle concurrent writes and syncs.
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
+static int crash_failure_one_in = -1;
 static int sync_failure_one_in = -1;
 static bool crash_after_sync_failure = false;
 static int num_syncs_until_crash = -1;
@@ -43,6 +44,9 @@ void maybe_init() {
     memset(fd_to_buf, 0, kMaxFd * sizeof(struct Buf));
 
     char* getenv_res;
+    if ((getenv_res = getenv("CRASH_FAILURE_ONE_IN")) != NULL) {
+        crash_failure_one_in = atoi(getenv_res);
+    }
     if ((getenv_res = getenv("SYNC_FAILURE_ONE_IN")) != NULL) {
         sync_failure_one_in = atoi(getenv_res);
     }
@@ -119,7 +123,9 @@ int fsync(int fd) {
     fd_to_buf[fd].len = 0;
 
     int ret;
-    if (sync_failure_one_in > 0 && random() % sync_failure_one_in == 0) {
+    if (crash_failure_one_in > 0 && random() % crash_failure_one_in == 0) {
+        kill(getpid(), SIGKILL);
+    } else if (sync_failure_one_in > 0 && random() % sync_failure_one_in == 0) {
         if (num_syncs_until_crash == -1) {
             // This was the first failure. Start the countdown.
             num_syncs_until_crash = 10;

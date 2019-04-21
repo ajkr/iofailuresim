@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 const static int kMaxFd = 1024;
@@ -50,6 +51,7 @@ void maybe_init() {
             crash_after_sync_failure = true;
         }
     }
+    srandom(time(NULL));
     pthread_mutex_unlock(&lock);
 }
 
